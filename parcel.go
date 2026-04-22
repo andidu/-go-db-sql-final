@@ -122,7 +122,7 @@ func (s ParcelStore) Delete(number int) error {
 	}
 
 	if p == ParcelStatusRegistered {
-		tx.Exec("DELETE * FROM parcel WHERE number=:number", sql.Named("number", number))
+		tx.Exec("DELETE FROM parcel WHERE number=:number", sql.Named("number", number))
 	}
 
 	tx.Commit()
