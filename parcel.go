@@ -65,6 +65,10 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 
 		res = append(res, parcel)
 	}
+	err = rows.Err()
+	if err != nil {
+		return res, err
+	}
 
 	return res, nil
 }
@@ -83,48 +87,26 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
-	tx, err := s.db.Begin()
+	_, err := s.db.Exec("UPDATE parcel SET address=:address WHERE number=:number AND status=:status",
+		sql.Named("address", address),
+		sql.Named("number", number),
+		sql.Named("status", ParcelStatusRegistered),
+	)
 	if err != nil {
 		return err
 	}
 
-	row := tx.QueryRow("SELECT status FROM parcel WHERE number=:number", sql.Named("number", number))
-	var p string
-	err = row.Scan(&p)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if p == ParcelStatusRegistered {
-		tx.Exec("UPDATE parcel SET address=:address WHERE number=:number",
-			sql.Named("address", address),
-			sql.Named("number", number),
-		)
-	}
-
-	tx.Commit()
 	return nil
 }
 
 func (s ParcelStore) Delete(number int) error {
-	tx, err := s.db.Begin()
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number=:number AND status=:status",
+		sql.Named("number", number),
+		sql.Named("status", ParcelStatusRegistered),
+	)
 	if err != nil {
 		return err
 	}
 
-	row := tx.QueryRow("SELECT status FROM parcel WHERE number=:number", sql.Named("number", number))
-	var p string
-	err = row.Scan(&p)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if p == ParcelStatusRegistered {
-		tx.Exec("DELETE FROM parcel WHERE number=:number", sql.Named("number", number))
-	}
-
-	tx.Commit()
 	return nil
 }
